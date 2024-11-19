@@ -1,0 +1,25 @@
+services:
+  projectsdb:
+    image: library/postgres:17
+    container_name: projectsdb
+    environment:
+      POSTGRES_USER: 'projects'
+      POSTGRES_PASSWORD: '123456'
+      POSTGRES_DB: 'projects'
+    ports:
+      - "5401:5432"
+    user: "1000:1000"
+    volumes:
+      - ./projects-data:/var/lib/postgresql/data
+  legacydb:
+    image: library/postgres:17
+    container_name: legacydb
+    environment:
+      POSTGRES_USER: 'legacy'
+      POSTGRES_PASSWORD: '123456'
+      POSTGRES_DB: 'legacy'
+    ports:
+      - "5402:5432"
+    user: "1000:1000"
+    volumes:
+      - ./legacy-data:/var/lib/postgresql/data
