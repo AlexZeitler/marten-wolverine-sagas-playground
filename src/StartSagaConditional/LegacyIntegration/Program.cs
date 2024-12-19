@@ -1,66 +1,18 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using LegacyIntegration.StartProjectFromIntegration;
-using Marten;
-using Marten.Events;
-using Marten.Events.Projections;
-using Npgsql;
-using Weasel.Core;
-using Wolverine;
-using Wolverine.Http;
-using Wolverine.Transports.Tcp;
+using System.Reflection;
+using LegacyIntegration;
 
-var connectionString = new NpgsqlConnectionStringBuilder()
-{
-  Host = "localhost",
-  Port = 5402,
-  Database = "legacy",
-  Username = "legacy",
-  Password = "123456"
-}.ToString();
-
-await Host.CreateDefaultBuilder()
-  .ConfigureWebHostDefaults(
-    builder =>
-    {
-      builder
-        .UseKestrel(
-          options => { options.ListenAnyIP(5001); }
-        )
-        .Configure(
-          app => app
-            .UseRouting()
-            .UseEndpoints(
-              endpoints => endpoints.MapWolverineEndpoints()
-            )
-        );
-    }
+var configuration = new ConfigurationBuilder().AddJsonFile(
+    "appsettings.json",
+    optional: false,
+    reloadOnChange: true
   )
-  .ConfigureServices(
-    services => services
-      .AddWolverineHttp()
-      .AddMarten(
-        options =>
-        {
-          options.Connection(connectionString);
-          options.Events.StreamIdentity = StreamIdentity.AsString;
-          options.AutoCreateSchemaObjects = AutoCreate.All;
+  .Build();
 
-          options.Projections.Add<IntegrationProjectProjection>(ProjectionLifecycle.Inline);
-        }
-      )
-  )
-  .UseWolverine(
-    options =>
-    {
-      options.ListenAtPort(5003);
 
-      options.PublishAllMessages()
-        .ToPort(5002);
+var hostBuilder = Host.CreateDefaultBuilder(args);
 
-      options.PublishAllMessages()
-        .ToPort(5003);
-    }
-  )
+await hostBuilder.ConfigureLegacyIntegration(configuration)
   .Build()
   .RunAsync();
